@@ -1,0 +1,98 @@
+1) With a++ the value of a is evaluated and then it is incremented.  With ++a it is incremented and then evaluated.  You might use the latter when doing a forward reference in a loop e.g.
+while (a < last_element)
+   {
+    if (list[a] < list [++a])
+       {// do something}
+   }
+This would be faster but less readable (to me anywway) than
+while (a < last_element)
+   {
+    if (list[a] < list [a+1])
+       {// do something}
+    a++
+   }
+Although a for loop would obviously be better here.
+Note this feature is not available in python but I answered it because I knew it anyway.
+2) At a very simple level I was taught that if you are using OOP then you look at the nouns in a requirement and if you are using functional programming you look at the verbs.  OO programs consists of objects with attrbutes and methods which are used to change these attributes.  In a functional program the subprograms take in data and return values to perform specific operations.  Larger systems will usually have a combination of both e.g. I worksed on a submarine sytsem so the ships, what they were, where they were heading etc. was obviously done using OO.  Working out where they were from the signals received given the oceanographic conditions was functional.
+3) These are Javascript terms which I am not familiar with.
+4)Short circuiting is where the program stops evaluating a logical statement at the point it works out the answer rather than evaluating all the conditions e.g. when it finds a False in a sequence of ands.  I use it in code when evaluating a subsequent condition in an and would cause an error (rather than evaluating to False) if the first condition was not True
+e.g.
+if digit < numeral.len() - 1 and
+    numeral[digit].value() < numeral.[digit + 1] value:
+    total -= numeral[digit].value()
+else:
+    total += numeral[digit].value()
+(a basic roman numeral calculator, the last digit is always added but others are based on what comes next but can't make comparison if it is the last digit so use short-circuit)
+5) My thoughts on composition v inheritance is similar to my thoughts on functional programming versus OOP i.e. use whichever is appropriate, rather than favouring one over the other.  That is a bit glib and "appropriate" is doing a lot of heavy lifting.  For inheritance an object has to be a genuine subclass.  You would also want to use it in its own right.  For composition the object should intrinsically be a part of the containing object.  So you might have a class hierarchy animal - mammal - giraffe say which should use inheritance.  If you have a class Zoo this would contain animals but animal would be defined elsewhere and its definition imported.  However it would also contain Zookeepers which you would define inside Zoo.  These would probably inherit from Person but you would not want to use their specific zookeeping methods outside of a Zoo object.  I would saythat the "genuine subtype" is the most important consideration for using inheritance over composition.  In python there is no concept of interfaces as there is in Java so it is valid here to use inheritance as an "implements" provided the parent is a purely abstract object.
+6) Regex can be quite esoteric but is useful for things that have a fixed syntax.  As an example I worked on a system that scanned in documents and each had a barcode with data pertaining to the document this translated into an expression which was something like nnnnn.nnnnnn.LL.ddmmyy.vvv where the first n's were some sort of reference number the LL were two characters representing the language of the document (this was a Swiss application so were multiple possibilities) then there was the date and then the version.  This could have worked by splitting up the string but it made more sense to use a regex to capture each part.  String manipulation I would normally use for somthing simpler, usually with a python split command e.g. could use split(".") on a filename to get its suffix and its main part (although os operations could be better employed).  A simple parser would be used for something irregular but still with an identifiable set of rules, perhaps where one part is dependent on another part.  e.g. a book identifier might be isbn which itself could be 10 characters with no dashes or 13 characters with 3-10 or it could be an electronic book with an asin which is different entirely so a regular expression would not be most suitable.
+7) In the last project I worked we had a lot of dependency injection.  This was not a deliberate design decision but was due to the nature of the system.  We were running tests that controlled various bits of equipmentbased on configurations specified by the user.  The user settings were passed in as objects and the equipment was represented by objects.  For unit testing it mostly involved setting up the config objects and using simulator objects for the equipment (we could have used mocks but we had the simulators already to allow integration tests when real equipment wasn't available).  The passing of these objects propogated down to lower level methods/subprograms so unit testing was straightforward usually involving setting up different config and asserting the right commands were sent to the equipment.  
+8)An example of defensive programming is to detect an uninitialised attribute in an obejct which where you are using it you expect it to have been initialised.  An example might be an object representing a position sensor.  It might not know its position at initialisation but you don't want to give it a default e.g. [0,0] so in the init set it to None.  Then if you have a method which wants to work out how to move an object to a choice of start positions that is nearest its current position then you could have
+if object.position != None:
+    for start_position in start_positions:
+        # calculate distance from position
+        # if nearer than previous select it
+else:
+    chosen_start = start_positions[0] # some default
+object.move_to(chosen_start)
+This would prevent an exception in the "calculate distance"  whose handling may not have the desired effect (note I understand it is more pythonic to allow exceptions and handle them than it is to defend against them).  The above approach does not preclude having the distance calculation raising an exception and optionally handling it.
+9)Generally I think it is bad to commit built files (here I am talking about images as I am a back end person, whereas I think the example quoted in the question is to do with style sheets which is slightly different).  Eveything should be recreatable from the committed objects.  When I have used git hub before, a build is performed after a commit, or merge and the artefact can be saved and retrieved from the actions tab.  This would be useful for when a build takes a long time and would be a waste of resources to recreate but it does mean you can find the exact codebase of any given build, so a happy medium.  Proving you have fixed something in a committed image is more difficult as you need to prove you have changed exactly the right instance of the source file.
+10) Basically if the data is going to be updated frequently then I would use json and if it is static e.g the db is used to store config data then I would use json.  If I have an OO system and want to store the objects in a db then I tend to use normalisation with tables mapping on to objects, although it is easy enough to convert objects to dicts and so to json, however storing objects implies you are going to be updating them which comes back to the first point
+11)It's a long time since I have seen a stored procedure.  I prefer to use a dynamic sql query but a stored procedure is more efficient and is probably more maintainable.  So if the query is very intensive then that is when a strored procedure would be used (it also uses the servers resources which are potentially more powerful).
+12) I'll be honest I had to look up ORM.  My main concern with using it would be that it hides what is going on which could lead to inefficient code so would be inadvisable to use for certain queries which are intensive and/or frequently used.  Here you would want to use SQL which could be tweaked for maximum efficiency.
+13) In my last project we used python 3.9 but then for one part had a dependency chain which eventually meant we had to revert to 3.8.  This was no big deal because the only 3.9 feature we used was to use dict and list in type hints rather than Dict and List from typing.  3.8 did not have any wow features introduced either.  Using the = in f strings helped to simplfy debug code
+e.g.
+logger.debug(f'sent{attenuation=} and {phase=} to chip {chip_number}'
+Note here I did not use {chip_number=} as that would not read so well.
+I always try and use the latest version not least because of the efficiency improveents but the last "must have" feature for me was f strings in 3.6.
+14) That is a web development issue so not relvant to me (currently).
+15)
+{"basics": {
+  "age": 56,
+  "marital status": "married",
+  "number of children": 1
+  "height": 1.82
+  "BMI": 25.0
+  "hair": "still plenty but too much grey"
+  },
+ "places lived and how long": [
+   [
+    "London",
+    "Lincoln",
+    "Exeter",
+    "London",
+    "Friedrichshafen",
+    "London",
+    "Bern",
+    "Biggleswade"
+    ],
+   [
+    4,
+    14,
+    3,
+    13,
+    2,
+    1,
+    16,
+    4
+   ],
+  ],
+  "sports": {
+     "play or watch":
+      [
+       "football",
+       "cricket",
+       "golf",
+       "skiing",
+       "darts"
+      ],
+     "still active": [
+      false,
+      false,
+      true,
+      true,
+      false
+      ]
+  }
+  faults: "inclined to miss quotation marks",
+  "current_state": "tired from answering questions but hopeful have answered correctly"
+}
